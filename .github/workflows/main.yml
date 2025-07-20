@@ -1,0 +1,39 @@
+# .github/workflows/gitleaks-scan.yml
+
+name: 'Security Scan: Gitleaks'
+
+# This workflow runs on pushes to the main branch and on any pull request.
+# You can customize this to fit your branching strategy.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main", "develop" ]
+  # pull_request:
+  #   branches: [ "main", "develop" ]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+        # Gitleaks needs the full git history to scan previous commits.
+        # '0' indicates a full fetch, not just a shallow clone.
+        with:
+          fetch-depth: 0
+
+      - name: 'Run Gitleaks Scan'
+        # Use the official Gitleaks Action
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          # If you have a Gitleaks config file, you can specify its path here.
+          # GITLEAKS_CONFIG_PATH: ${{ github.workspace }}/.gitleaks.toml
+          
+          # This variable tells Gitleaks where to upload its report as a build artifact.
+          # This report will contain any found secrets.
+          GITLEAKS_REPORT_PATH: ${{ github.workspace }}/gitleaks-report.json
+          
+          # The GITHUB_TOKEN is automatically created by Actions and is required for the action
+          # to integrate with your repository (e.g., for reporting).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
