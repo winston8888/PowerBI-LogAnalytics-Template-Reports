@@ -12,17 +12,47 @@ rules:
 
   - id: row-level-security-bypass
     pattern-either:
-      - pattern: |
-          USERNAME() = "admin"
-      - pattern: |
-          USERPRINCIPALNAME() = "..."
-    message: "Potential RLS bypass detected"
+      - pattern-regex: 'USERNAME\(\)\s*=\s*["\']admin["\']'
+      - pattern-regex: 'USERPRINCIPALNAME\(\)\s*=\s*["\'][^"\']*["\']'
+      - pattern-regex: 'USEROBJECTID\(\)\s*=\s*["\'][^"\']*["\']'
+    message: "Potential RLS bypass detected in DAX expressions"
     severity: ERROR
-    languages: [dax]
+    languages: [javascript, typescript, csharp, python, json]
 
-  - id: insecure-cors-config
-    pattern: |
-      Access-Control-Allow-Origin: "*"
-    message: "Insecure CORS configuration allowing all origins"
+### 4. Power BI Configuration Files (`rules/powerbi-config.yml`)
+
+```yaml
+rules:
+  - id: insecure-power-bi-config
+    pattern-either:
+      - pattern: |
+          "embedUrl": "http://..."
+      - pattern: |
+          "accessToken": "$TOKEN"
+      - pattern: |
+          "masterUser": "$USER"
+      - pattern: |
+          "masterPassword": "$PASS"
+    message: "Insecure Power BI configuration detected"
+    severity: ERROR
+    languages: [json]
+    metadata:
+      category: security
+      technology:
+        - powerbi
+
+  - id: hardcoded-workspace-id
+    pattern-regex: '"workspaceId":\s*"[a-f0-9-]{36}"'
+    message: "Hardcoded workspace ID - consider using environment variables"
     severity: WARNING
-    languages: [yaml, json]
+    languages: [json, javascript, typescript]
+
+  - id: power-bi-dataset-exposure
+    pattern-either:
+      - pattern: |
+          "IsEffectiveIdentityRequired": false
+      - pattern: |
+          "IsEffectiveIdentityRolesRequired": false
+    message: "Dataset may allow unrestricted access without effective identity"
+    severity: WARNING
+    languages: [json]
