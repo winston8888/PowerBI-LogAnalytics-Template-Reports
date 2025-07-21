@@ -37,11 +37,32 @@ jobs:
           # to integrate with your repository (e.g., for reporting).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Install Template Analyzer
-        run: dotnet tool install -g PowerBI.TemplateAnalyzer
+  analyze-template:
+    runs-on: windows-latest
 
-      - name: Run Template Analyzer
-        run: template-analyzer analyze --workspace extracted
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install pbi-tools
+      run: |
+        dotnet tool install -g pbi-tools
+      shell: pwsh
+
+    - name: Install Tabular Editor
+      run: |
+        dotnet tool install -g te2-cli
+      shell: pwsh
+
+    - name: Extract Power BI Template
+      run: |
+        pbi-tools extract "FabricASEngineAnalytics/FabricASEngineAnalytics.pbit" -extractFolder "extracted-model"
+      shell: pwsh
+
+    - name: Run Best Practice Analyzer
+      run: |
+        te2-cli "extracted-model" -A "FabricASEngineAnalytics/src/SemanticModel" -E
+      shell: pwsh
 
   semgrep:
     # User definable name of this GitHub Actions job.
