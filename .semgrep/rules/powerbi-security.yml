@@ -1,20 +1,18 @@
 rules:
-  - id: unsecured-embed-token
-    pattern: |
-      generateEmbedToken()
-    message: "Embed token generation without proper validation"
-    severity: WARNING
-    languages: [javascript, csharp]
-    metadata:
-      category: security
-      technology:
-        - powerbi
-
-  - id: row-level-security-bypass
-    pattern-either:
-      - pattern-regex: 'USERNAME\(\)\s*=\s*["\']admin["\']'
-      - pattern-regex: 'USERPRINCIPALNAME\(\)\s*=\s*["\'][^"\']*["\']'
-      - pattern-regex: 'USEROBJECTID\(\)\s*=\s*["\'][^"\']*["\']'
-    message: "Potential RLS bypass detected in DAX expressions"
+  - id: powerbi-hardcoded-creds
+    pattern-regex: '(Password|Key|Token)\s*=\s*["''][^"\n]+["'']'
+    message: Hardcoded credentials detected in Power BI script
+    languages: [generic]
     severity: ERROR
-    languages: [javascript, typescript, csharp, python, json]
+
+  - id: powerbi-sqli-risk
+    pattern-regex: 'Sql\.Database\(.*".*\&.*"\)|Text\.Combine\(.*,.*\)'
+    message: Dynamic SQL concatenation (SQL injection risk)
+    languages: [generic]
+    severity: WARNING
+
+  - id: powerbi-http-call
+    pattern-regex: 'Web\.Contents\("http://"'
+    message: Unencrypted HTTP call detected. Use HTTPS.
+    languages: [generic]
+    severity: ERROR
