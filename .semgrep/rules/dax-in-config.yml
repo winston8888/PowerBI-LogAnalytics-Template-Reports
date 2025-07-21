@@ -1,0 +1,22 @@
+rules:
+  - id: dax-in-json-config
+    pattern-regex: '"(expression|formula|dax)":\s*"[^"]*(\+|CONCATENATE|&)[^"]*"'
+    message: "Dynamic DAX expression found in configuration - potential injection risk"
+    severity: ERROR
+    languages: [json]
+    metadata:
+      category: security
+      technology:
+        - powerbi
+
+  - id: user-input-in-dax-json
+    pattern-regex: '"(expression|formula|dax)":\s*"[^"]*\$\{[^}]*\}[^"]*"'
+    message: "User input interpolation in DAX expression"
+    severity: ERROR
+    languages: [json]
+
+  - id: rls-bypass-in-config
+    pattern-regex: '"(expression|formula|dax)":\s*"[^"]*(USERNAME|USERPRINCIPALNAME)\(\)[^"]*=\s*[^"]*"'
+    message: "Potential RLS bypass in configuration DAX"
+    severity: ERROR
+    languages: [json, xml]
