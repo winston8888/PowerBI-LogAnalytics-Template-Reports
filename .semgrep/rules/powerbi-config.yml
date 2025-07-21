@@ -1,0 +1,33 @@
+rules:
+  - id: insecure-power-bi-config
+    pattern-either:
+      - pattern: '"embedUrl": "http://..."'
+      - pattern: '"accessToken": "$TOKEN"'
+      - pattern: '"masterUser": "$USER"'
+      - pattern: '"masterPassword": "$PASS"'
+    message: "Insecure Power BI configuration detected"
+    severity: ERROR
+    languages: 
+      - json
+    metadata:
+      category: security
+      technology:
+        - powerbi
+
+  - id: hardcoded-workspace-id
+    pattern-regex: '"workspaceId":\s*"[a-f0-9-]{36}"'
+    message: "Hardcoded workspace ID - consider using environment variables"
+    severity: WARNING
+    languages: 
+      - json
+      - javascript
+      - typescript
+
+  - id: power-bi-dataset-exposure
+    pattern-either:
+      - pattern: '"IsEffectiveIdentityRequired": false'
+      - pattern: '"IsEffectiveIdentityRolesRequired": false'
+    message: "Dataset may allow unrestricted access without effective identity"
+    severity: WARNING
+    languages: 
+      - json
