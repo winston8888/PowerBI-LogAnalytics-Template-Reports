@@ -36,6 +36,12 @@ jobs:
           # The GITHUB_TOKEN is automatically created by Actions and is required for the action
           # to integrate with your repository (e.g., for reporting).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Install Template Analyzer
+        run: dotnet tool install -g PowerBI.TemplateAnalyzer
+
+      - name: Run Template Analyzer
+        run: template-analyzer analyze --workspace extracted
 
   semgrep:
     # User definable name of this GitHub Actions job.
