@@ -54,4 +54,12 @@ jobs:
       # Fetch project source with GitHub Actions Checkout. Use either v3 or v4.
       - uses: actions/checkout@v4
       # Run the "semgrep scan" command on the command line of the docker image.
-      - run: semgrep scan --config .semgrep/rules/
+      - run: semgrep scan --config .semgrep/rules/ --json-output=findings.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-results
+          path: findings.json
+          retension-days: 1
