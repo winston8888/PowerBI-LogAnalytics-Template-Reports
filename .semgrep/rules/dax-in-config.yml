@@ -24,3 +24,40 @@ rules:
     languages: 
       - json
       - xml
+
+  - id: rls-directquery-bypass
+    pattern-regex: |
+      \bEVALUATE\b.*\bSELECTCOLUMNS\b.*\bFILTER\b.*\bNOT\b.*\bUSERNAME\(\)\b
+    message: |
+      Potential RLS bypass: DAX uses NOT with USERNAME(), which could invert security logic.
+    languages: [generic]
+    severity: ERROR
+
+  - id: rls-insecure-dynamic-table
+    pattern-regex: |
+      \bFILTER\b.*\bLOOKUPVALUE\b.*\bUSERNAME\(\)\b.*\bUNION\b
+    message: |
+      Insecure dynamic table merge (UNION) with RLS. 
+      This could merge restricted and unrestricted data.
+    languages: [generic]
+    severity: WARNING
+
+  - id: rls-hardcoded-override
+    patterns:
+      - pattern: |
+          FILTER(
+            ...,
+            $TABLE[$COLUMN] = "ADMIN" <...>
+          )
+      - pattern-not: |
+          FILTER(
+            ...,
+            $TABLE[$COLUMN] = USERNAME() <...>
+          )
+    message: |
+      Hardcoded RLS override detected. DAX uses static value ("ADMIN") instead of USERNAME()/USERPRINCIPALNAME().
+      This could allow unauthorized data access if modified client-side.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      cwe: "CWE-284: Improper Access Control"
