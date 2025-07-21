@@ -1,0 +1,28 @@
+rules:
+  - id: unsecured-embed-token
+    pattern: |
+      generateEmbedToken()
+    message: "Embed token generation without proper validation"
+    severity: WARNING
+    languages: [javascript, csharp]
+    metadata:
+      category: security
+      technology:
+        - powerbi
+
+  - id: row-level-security-bypass
+    pattern-either:
+      - pattern: |
+          USERNAME() = "admin"
+      - pattern: |
+          USERPRINCIPALNAME() = "..."
+    message: "Potential RLS bypass detected"
+    severity: ERROR
+    languages: [dax]
+
+  - id: insecure-cors-config
+    pattern: |
+      Access-Control-Allow-Origin: "*"
+    message: "Insecure CORS configuration allowing all origins"
+    severity: WARNING
+    languages: [yaml, json]
