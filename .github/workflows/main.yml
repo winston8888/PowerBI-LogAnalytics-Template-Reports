@@ -46,15 +46,15 @@ jobs:
 
     - name: Install pbi-tools
       run: |
-        wget https://github.com/pbi-tools/pbi-tools/releases/latest/download/pbi-tools.zip # Check for the latest release URL
-        unzip pbi-tools.zip -d pbi-tools
-        echo "pbi-tools directory contents:"
-        ls pbi-tools
+        $url = "https://github.com/pbi-tools/pbi-tools/releases/download/1.2.0/pbi-tools.1.2.0.zip"
+        Invoke-WebRequest -Uri $url -OutFile "pbi-tools.zip"
+        Expand-Archive "pbi-tools.zip" -DestinationPath "pbi-tools"
 
     - name: Install Tabular Editor
       run: |
-        dotnet tool install -g te2-cli
-      shell: pwsh
+       # Download and install Tabular Editor 3 CLI
+        Invoke-WebRequest -Uri "https://cdn.tabulareditor.com/files/TabularEditor.3.22.1.Installer.x64.Net8.exe" -OutFile "te3.zip"
+        Expand-Archive "te3.zip" -DestinationPath "TabularEditor3"
 
     - name: Extract Power BI Template
       run: |
