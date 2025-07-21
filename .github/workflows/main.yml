@@ -46,8 +46,10 @@ jobs:
 
     - name: Install pbi-tools
       run: |
-        dotnet tool install -g pbi-tools
-      shell: pwsh
+        wget https://github.com/pbi-tools/pbi-tools/releases/latest/download/pbi-tools.zip # Check for the latest release URL
+        unzip pbi-tools.zip -d pbi-tools
+        echo "pbi-tools directory contents:"
+        ls pbi-tools
 
     - name: Install Tabular Editor
       run: |
