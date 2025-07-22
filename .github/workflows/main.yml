@@ -65,7 +65,7 @@ jobs:
       run: |
        # Define paths
         $tePath = "TabularEditor3\TabularEditor3.exe"
-        $reportPath = "\FabricASEngineAnalytics\src" # Adjust to your Power BI files location
+        $reportPath = "FabricASEngineAnalytics\src" # Adjust to your Power BI files location
         
         # Create results directory
         New-Item -ItemType Directory -Force -Path "analysis-results"
