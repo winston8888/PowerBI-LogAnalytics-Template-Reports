@@ -56,15 +56,99 @@ jobs:
         Invoke-WebRequest -Uri "https://cdn.tabulareditor.com/files/TabularEditor.3.22.1.x64.Net8.zip" -OutFile "te3.zip"
         Expand-Archive "te3.zip" -DestinationPath "TabularEditor3"
 
-    - name: Extract Power BI Template
-      run: |
-        pbi-tools extract "FabricASEngineAnalytics/FabricASEngineAnalytics.pbit" -extractFolder "extracted-model"
-      shell: pwsh
+    # - name: Extract Power BI Template
+    #   run: |
+    #     pbi-tools extract "FabricASEngineAnalytics/FabricASEngineAnalytics.pbit" -extractFolder "extracted-model"
+    #   shell: pwsh
 
     - name: Run Best Practice Analyzer
       run: |
-        te2-cli "extracted-model" -A "FabricASEngineAnalytics/src/SemanticModel" -E
-      shell: pwsh
+       # Define paths
+        $tePath = "TabularEditor3\TabularEditor3.exe"
+        $reportPath = "src" # Adjust to your Power BI files location
+        
+        # Create results directory
+        New-Item -ItemType Directory -Force -Path "analysis-results"
+        
+        # Find all .pbix or .bim files
+        $powerBiFiles = Get-ChildItem -Path $reportPath -Include "*.pbix", "*.bim", "*.pbit" -Recurse
+        
+        foreach ($file in $powerBiFiles) {
+            Write-Host "Analyzing: $($file.Name)"
+            
+            # Run Best Practice Analyzer
+            $outputFile = "analysis-results\$($file.BaseName)-bpa-results.json"
+            
+            try {
+                if ($file.Extension -eq ".pbix" -or $file.Extension -eq ".pbit") {
+                    # For PBIX/PBIT files, extract model first
+                    & $tePath $file.FullName -S "Model.SaveDB(`"temp-model.bim`")"
+                    & $tePath "temp-model.bim" -A -O $outputFile
+                    Remove-Item "temp-model.bim" -ErrorAction SilentlyContinue
+                } else {
+                    # For BIM files, analyze directly
+                    & $tePath $file.FullName -A -O $outputFile
+                }
+                
+                Write-Host "Analysis completed for: $($file.Name)"
+            }
+            catch {
+                Write-Host "Error analyzing $($file.Name): $_"
+                exit 1
+            }
+        }
+        
+    - name: Process Analysis Results
+      run: |
+        # Process and summarize results
+        $results = Get-ChildItem -Path "analysis-results" -Filter "*.json"
+        $summary = @()
+        
+        foreach ($result in $results) {
+            $content = Get-Content $result.FullName | ConvertFrom-Json
+            
+            $violations = $content | Where-Object { $_.Severity -in @("Error", "Warning") }
+            
+            if ($violations.Count -gt 0) {
+                $summary += [PSCustomObject]@{
+                    File = $result.BaseName
+                    Errors = ($violations | Where-Object { $_.Severity -eq "Error" }).Count
+                    Warnings = ($violations | Where-Object { $_.Severity -eq "Warning" }).Count
+                    Issues = $violations
+                }
+            }
+        }
+        
+        # Output summary
+        if ($summary.Count -gt 0) {
+            Write-Host "=== BEST PRACTICE ANALYZER SUMMARY ===" -ForegroundColor Red
+            foreach ($item in $summary) {
+                Write-Host "File: $($item.File)" -ForegroundColor Yellow
+                Write-Host "  Errors: $($item.Errors)" -ForegroundColor Red
+                Write-Host "  Warnings: $($item.Warnings)" -ForegroundColor Yellow
+                
+                foreach ($issue in $item.Issues) {
+                    Write-Host "    - [$($issue.Severity)] $($issue.RuleName): $($issue.ObjectName)" -ForegroundColor Gray
+                }
+            }
+            
+            # Fail the build if there are errors
+            $totalErrors = ($summary | Measure-Object -Property Errors -Sum).Sum
+            if ($totalErrors -gt 0) {
+                Write-Host "Build failed due to $totalErrors error(s)" -ForegroundColor Red
+                exit 1
+            }
+        } else {
+            Write-Host "All files passed best practice analysis!" -ForegroundColor Green
+        }
+        
+    - name: Upload Analysis Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bpa-analysis-results
+        path: analysis-results/
+        retention-days: 30
 
   semgrep:
     # User definable name of this GitHub Actions job.
