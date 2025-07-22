@@ -53,7 +53,7 @@ jobs:
     - name: Install Tabular Editor
       run: |
        # Download and install Tabular Editor 3 CLI
-        Invoke-WebRequest -Uri "https://cdn.tabulareditor.com/files/TabularEditor.3.22.1.Installer.x64.Net8.exe" -OutFile "te3.zip"
+        Invoke-WebRequest -Uri "https://cdn.tabulareditor.com/files/TabularEditor.3.22.1.x64.Net8.zip" -OutFile "te3.zip"
         Expand-Archive "te3.zip" -DestinationPath "TabularEditor3"
 
     - name: Extract Power BI Template
